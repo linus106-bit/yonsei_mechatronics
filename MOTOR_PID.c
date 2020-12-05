@@ -4,7 +4,7 @@
 #include <softPwm.h>
 #include <math.h>
 
-#define REFERENCE 10
+#define REFERENCE 15
 
 #define MOTOR1 21
 #define MOTOR2 20

@@ -16,7 +16,7 @@
 #define PGAIN 850 // 850
 #define IGAIN 19000
 #define DGAIN 10
-#define tau 0.001
+#define tau 0.0005
 
 #define LOOPTIME 1 // unit : millisec
 
@@ -28,7 +28,7 @@ float GearPosition = 0;
 float referencePosition;
 float errorPosition;
 float error_prev;
-float gear_prev;
+float gear_lpf_prev;
 
 float I = 0;
 float I_past = 0;
@@ -63,7 +63,7 @@ void funcEncoderA()
 			encoderPosition++;
 	}
 	GearPosition = (float)encoderPosition / ENC2GEAR;
-	//errorPosition = referencePosition -GearPosition;
+	errorPosition = referencePosition -GearPosition;
 }
 
 void funcEncoderB()
@@ -88,14 +88,14 @@ void funcEncoderB()
 			encoderPosition--;
 	}
 	GearPosition = (float)encoderPosition / ENC2GEAR;
-	//errorPosition = referencePosition - GearPosition;
+	errorPosition = referencePosition - GearPosition;
 }
 
 int main(void)
 {
 	referencePosition = REFERENCE;
 	FILE* fp = fopen("2016145122.txt", "w");
-	gear_prev = 0;
+	gear_lpf_prev = 0;
 	error_prev = referencePosition;
 	errorPosition = referencePosition;
 	
@@ -113,15 +113,17 @@ int main(void)
     {
         checkTime = millis();
         t = (checkTime - startTime)/1000;
-        if (t >=0 && t < 5)
-        { referencePosition = 2*t + sin(4*t); }
-        else if (t >= 5 && t < 10)
-        { referencePosition = 0; }
-        else if (t >= 10 && t <= 15)
-        { referencePosition = 6*(t - 10); }	
+		if (t >=0 && t < 4)
+		{ referencePosition = 0.2*t; }
+		else if (t >= 4 && t < 7.5)
+		{ referencePosition = -10; }
+		else if (t >= 7.5 && t < 11.5)
+		{ referencePosition = -0.2*(t - 7.5); }
+		else if (t >= 11.5 && t <= 15)
+		{ referencePosition = 8; }
         // errorPosition = referencePosition - GearPosition;
 
-		float Gear_LPF = (tau*gear_prev+(LOOPTIME*0.001)*GearPosition)/(tau+(LOOPTIME * 0.001));
+		float Gear_LPF = (tau*gear_lpf_prev+(LOOPTIME*0.001)*GearPosition)/(tau+(LOOPTIME * 0.001));
 		errorPosition = referencePosition - Gear_LPF;
         //unsigned int interval = checkTime - checkTimeBefore;
         // unsigned int time_now = checkTime - startTime;
@@ -157,7 +159,7 @@ int main(void)
 			// fprintf(fp, "%0.3f PID: %f\n", (checkTime - startTime) / 1000, PID);
 			printf("P: %f, I: %f, D: %f \n", P, I, D);
 			printf("referencePosition: %f, error: %f, position: %f\n",referencePosition, errorPosition, GearPosition);
-			gear_prev = Gear_LPF;
+			gear_lpf_prev = Gear_LPF;
 			error_prev = errorPosition;
 			checkTimeBefore = checkTime;
 			I_past = I;

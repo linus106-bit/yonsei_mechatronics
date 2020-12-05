@@ -94,7 +94,7 @@ void funcEncoderB()
 int main(void)
 {
 	referencePosition = REFERENCE;
-	FILE* fp = fopen("2016145122.txt", "w");
+	FILE* fp = fopen("2016145122_PID.txt", "w");
 	gear_prev = 0;
 	error_prev = referencePosition;
 	errorPosition = referencePosition;
@@ -111,14 +111,16 @@ int main(void)
     checkTimeBefore = millis();
     while (1)
     {
-        checkTime = millis();
-        t = (checkTime - startTime)/1000;
-        if (t >=0 && t < 5)
-        { referencePosition = 2*t + sin(4*t); }
-        else if (t >= 5 && t < 10)
-        { referencePosition = 0; }
-        else if (t >= 10 && t <= 15)
-        { referencePosition = 6*(t - 10); }	
+		checkTime = millis();
+		t = (checkTime - startTime)/1000;
+		if (t >=0 && t < 4)
+		{ referencePosition = 0.2*t; }
+		else if (t >= 4 && t < 7.5)
+		{ referencePosition = -10; }
+		else if (t >= 7.5 && t < 11.5)
+		{ referencePosition = -0.2*(t - 7.5); }
+		else if (t >= 11.5 && t <= 15)
+		{ referencePosition = 8; }
         errorPosition = referencePosition - GearPosition;
 
         //unsigned int interval = checkTime - checkTimeBefore;
