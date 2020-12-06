@@ -4,7 +4,7 @@
 #include <softPwm.h>
 #include <math.h>
 
-#define REFERENCE 100
+#define REFERENCE 0
 
 #define MOTOR1 21
 #define MOTOR2 20
@@ -14,9 +14,9 @@
 #define ENC2GEAR 216 //12*18 = 216
 
 #define PGAIN 850 // 850
-#define IGAIN 19000
-#define DGAIN 10
-#define tau 0.0005
+#define IGAIN 0
+#define DGAIN 0
+#define tau 0.001
 
 #define LOOPTIME 1 // unit : millisec
 
@@ -90,7 +90,12 @@ void funcEncoderB()
 	GearPosition = (float)encoderPosition / ENC2GEAR;
 	errorPosition = referencePosition - GearPosition;
 }
+float LowPassFilter(float output_prev, float input, float sampling_time)
+{
+	float LPF = (tau*output_prev+(sampling_time)*input)/(tau+(sampling_time));
 
+	return LPF;
+}
 int main(void)
 {
 	referencePosition = REFERENCE;
@@ -113,17 +118,11 @@ int main(void)
     {
         checkTime = millis();
         t = (checkTime - startTime)/1000;
-		if (t >=0 && t < 4)
-		{ referencePosition = 0.2*t; }
-		else if (t >= 4 && t < 7.5)
-		{ referencePosition = -10; }
-		else if (t >= 7.5 && t < 11.5)
-		{ referencePosition = -0.2*(t - 7.5); }
-		else if (t >= 11.5 && t <= 15)
-		{ referencePosition = 8; }
+		referencePosition = 3*(0.1*t*sin(0.1*t)+(0.1*t-1)*cos(2*t))+3;
         // errorPosition = referencePosition - GearPosition;
 
-		float Gear_LPF = (tau*gear_lpf_prev+(LOOPTIME*0.001)*GearPosition)/(tau+(LOOPTIME * 0.001));
+		//float Gear_LPF = (tau*gear_lpf_prev+(LOOPTIME*0.001)*GearPosition)/(tau+(LOOPTIME * 0.001));
+		float Gear_LPF = LowPassFilter(gear_lpf_prev,GearPosition,LOOPTIME*0.001);
 		errorPosition = referencePosition - Gear_LPF;
         //unsigned int interval = checkTime - checkTimeBefore;
         // unsigned int time_now = checkTime - startTime;
